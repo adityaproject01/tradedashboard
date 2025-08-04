@@ -1,0 +1,57 @@
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  text-align: center;
+}
+
+.updated {
+  text-align: center;
+  color: gray;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.log-box {
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 15px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-left: 6px solid #999;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+.log-entry.buy {
+  border-color: green;
+  background-color: #e7ffe7;
+}
+
+.log-entry.sell {
+  border-color: red;
+  background-color: #ffe7e7;
+}
+
+.log-entry.hold {
+  border-color: #aaa;
+}
+
+.log-entry.stop {
+  border-color: orange;
+}
+
+.action {
+  text-transform: uppercase;
+  font-weight: bold;
+}
