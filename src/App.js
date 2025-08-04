@@ -27,7 +27,9 @@ function App() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/logs");
+        const res = await axios.get(
+          "https://tradeback-fc3132a1cbf2.herokuapp.com/api/logs"
+        );
         const newLogs = res.data;
         setLogs((prev) => {
           if (prev.length !== newLogs.length) {
@@ -49,7 +51,6 @@ function App() {
     return () => clearInterval(interval);
   }, [play]);
 
-
   const pieData = logs.reduce((acc, log) => {
     acc[log.Action] = (acc[log.Action] || 0) + 1;
     return acc;
@@ -65,7 +66,6 @@ function App() {
 
   return (
     <>
-    
       <div className="relative min-h-screen text-white font-mono overflow-hidden background-hud">
         <div className="relative z-10 p-6">
           <motion.h1
