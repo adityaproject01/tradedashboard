@@ -55,3 +55,51 @@ h1 {
   text-transform: uppercase;
   font-weight: bold;
 }
+/* App.css */
+
+/* Background HUD with grid lines */
+.background-hud {
+  background-color: #0d1120; /* deep navy background */
+  background-image:
+    /* Horizontal grid lines */
+    linear-gradient(to right, rgba(0, 255, 255, 0.15) 1px, transparent 1px),
+    /* Vertical grid lines */
+    linear-gradient(to bottom, rgba(0, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 50px 50px; /* Set the grid size to 50px */
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+}
+
+/* Corner line designs (at four corners) */
+.background-hud::before,
+.background-hud::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 0;
+}
+
+.background-hud::before {
+  top: 0;
+  left: 0;
+  transform: rotate(45deg); /* Create corner line design */
+}
+
+.background-hud::after {
+  bottom: 0;
+  right: 0;
+  transform: rotate(-45deg); /* Create corner line design */
+}
+
+/* Optional: Slight blur effect for corners */
+.background-hud::before,
+.background-hud::after {
+  box-shadow: 0 4px 10px rgba(0, 255, 255, 0.3);
+  opacity: 0.6;
+}
