@@ -74,7 +74,7 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            🤖 AI Trading HUD Dashboard
+            🤖 Little Boy
           </motion.h1>
 
           {lastTrade && (
