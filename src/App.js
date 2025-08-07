@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./App.css"; // make sure this is imported at the top
+import "./App.css";
 import {
   PieChart,
   Pie,
@@ -22,6 +22,12 @@ const COLORS = ["#00e3e3", "#00ff88", "#ff006e", "#ffe600", "#8c52ff"];
 function App() {
   const [logs, setLogs] = useState([]);
   const [lastTrade, setLastTrade] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return today;
+  });
+
+  const [uniqueDates, setUniqueDates] = useState([]);
   const [play] = useSound(pingSfx);
 
   useEffect(() => {
@@ -31,6 +37,7 @@ function App() {
           "https://tradeback-fc3132a1cbf2.herokuapp.com/api/logs"
         );
         const newLogs = res.data;
+
         setLogs((prev) => {
           if (prev.length !== newLogs.length) {
             const latest = newLogs[newLogs.length - 1];
@@ -41,6 +48,14 @@ function App() {
           }
           return newLogs;
         });
+
+        const dates = [
+          ...new Set(newLogs.map((log) => log.Time.split(" ")[0])),
+        ];
+        setUniqueDates(dates);
+        if (!selectedDate && dates.length > 0) {
+          setSelectedDate(dates[dates.length - 1]); // auto-select latest
+        }
       } catch (e) {
         console.error("Failed to fetch logs", e);
       }
@@ -49,9 +64,13 @@ function App() {
     fetchLogs();
     const interval = setInterval(fetchLogs, 3000);
     return () => clearInterval(interval);
-  }, [play]);
+  }, [play, selectedDate]);
 
-  const pieData = logs.reduce((acc, log) => {
+  const filteredLogs = selectedDate
+    ? logs.filter((log) => log.Time.startsWith(selectedDate))
+    : logs;
+
+  const pieData = filteredLogs.reduce((acc, log) => {
     acc[log.Action] = (acc[log.Action] || 0) + 1;
     return acc;
   }, {});
@@ -59,43 +78,70 @@ function App() {
     name,
     value,
   }));
-  const barChartData = logs.map((log, i) => ({
+
+  const barChartData = filteredLogs.map((log, i) => ({
     name: `${i + 1}`,
     PnL: parseFloat(log["P/L"]) || 0,
   }));
 
+  const totalProfitForDate = filteredLogs.reduce((sum, log) => {
+    return sum + (parseFloat(log["P/L"]) || 0);
+  }, 0);
+
   return (
-    <>
-      <div className="relative min-h-screen text-white font-mono overflow-hidden background-hud">
-        <div className="relative z-10 p-6">
-          <motion.h1
-            className="text-center text-4xl font-bold text-yellow-400 mb-8 border-b border-yellow-500 pb-3"
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+    <div className="relative min-h-screen text-white font-mono overflow-hidden background-hud">
+      <div className="relative z-10 p-6">
+        <motion.h1
+          className="text-center text-4xl font-bold text-yellow-400 mb-8 border-b border-yellow-500 pb-3"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          🤖 Little Boy
+        </motion.h1>
+
+        {/* Date Dropdown */}
+        <div className="mb-6 text-yellow-300 flex items-center gap-4">
+          <label htmlFor="date">Select Date:</label>
+          <select
+            id="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="bg-black text-yellow-200 border border-yellow-500 px-2 py-1 rounded"
           >
-            🤖 Little Boy
-          </motion.h1>
+            {uniqueDates.map((date, idx) => (
+              <option key={idx} value={date}>
+                {date}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {lastTrade && (
-            <motion.div
-              className="bg-yellow-900/60 backdrop-blur-md rounded-lg mb-6 p-4 shadow-xl border border-yellow-400/20"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <strong>Last Trade:</strong> {lastTrade.Action} @ ₹
-              {lastTrade.Price} | Qty: {lastTrade.Qty} | Net Worth: ₹
-              {lastTrade["Net Worth"]}
-            </motion.div>
-          )}
+        {/* Last Trade Info */}
+        {lastTrade && (
+          <motion.div
+            className="bg-yellow-900/60 backdrop-blur-md rounded-lg mb-6 p-4 shadow-xl border border-yellow-400/20"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <strong>Last Trade:</strong> {lastTrade.Action} @ ₹{lastTrade.Price}{" "}
+            | Qty: {lastTrade.Qty} | Net Worth: ₹{lastTrade["Net Worth"]}
+          </motion.div>
+        )}
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Trade Logs Table */}
-            <div className="bg-black/60 backdrop-blur-md rounded-2xl border border-yellow-500/20 shadow-xl glow-border p-4 max-h-[400px] overflow-y-auto logs-scrollbar">
-              <h2 className="text-xl font-bold tracking-wide text-yellow-300 border-b border-yellow-500 pb-2 mb-3 uppercase">
-                📋 Trade Logs
-              </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Trade Logs Table */}
+          <div className="bg-black/60 backdrop-blur-md rounded-2xl border border-yellow-500/20 shadow-xl glow-border p-4 max-h-[400px] overflow-y-auto logs-scrollbar">
+            <h2 className="text-xl font-bold tracking-wide text-yellow-300 border-b border-yellow-500 pb-2 mb-3 uppercase">
+              📋 Trade Logs for {selectedDate}
+            </h2>
+
+            {filteredLogs.length === 0 ? (
+              <div className="text-center text-yellow-400 py-10">
+                No trades for selected date.
+              </div>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-yellow-100 border-collapse">
                   <thead className="text-xs uppercase bg-yellow-900 text-yellow-300">
@@ -109,7 +155,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
-                    {logs.map((log, i) => (
+                    {filteredLogs.map((log, i) => (
                       <tr
                         key={i}
                         className={`transition-all duration-200 hover:bg-yellow-800/10 ${
@@ -133,15 +179,21 @@ function App() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Charts */}
-            <div className="grid gap-6">
-              {/* Pie Chart */}
-              <div className="bg-black/60 backdrop-blur-md rounded-xl p-4 shadow-xl border border-yellow-500/20 glow-border">
-                <h2 className="text-lg font-semibold text-yellow-300 mb-3">
-                  📊 Action Overview
-                </h2>
+          {/* Charts Section */}
+          <div className="grid gap-6">
+            {/* Pie Chart */}
+            <div className="bg-black/60 backdrop-blur-md rounded-xl p-4 shadow-xl border border-yellow-500/20 glow-border">
+              <h2 className="text-lg font-semibold text-yellow-300 mb-3">
+                📊 Action Overview — {selectedDate}
+              </h2>
+              {pieChartData.length === 0 ? (
+                <div className="text-center text-yellow-400 py-8">
+                  No data to display.
+                </div>
+              ) : (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
@@ -161,13 +213,19 @@ function App() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
+              )}
+            </div>
 
-              {/* Bar Chart */}
-              <div className="bg-black/60 backdrop-blur-md rounded-xl p-4 shadow-xl border border-yellow-500/20 glow-border">
-                <h2 className="text-lg font-semibold text-yellow-300 mb-3">
-                  📉 P/L Per Trade
-                </h2>
+            {/* Bar Chart */}
+            <div className="bg-black/60 backdrop-blur-md rounded-xl p-4 shadow-xl border border-yellow-500/20 glow-border">
+              <h2 className="text-lg font-semibold text-yellow-300 mb-3">
+                📉 P/L Per Trade — {selectedDate}
+              </h2>
+              {barChartData.length === 0 ? (
+                <div className="text-center text-yellow-400 py-8">
+                  No data to display.
+                </div>
+              ) : (
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={barChartData}>
                     <XAxis dataKey="name" />
@@ -177,12 +235,17 @@ function App() {
                     <Bar dataKey="PnL" fill="#ffe600" />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              )}
+            </div>
+
+            {/* Total Profit Display */}
+            <div className="text-yellow-300 text-center font-semibold">
+              💰 Total P/L on {selectedDate}: ₹{totalProfitForDate.toFixed(2)}
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
