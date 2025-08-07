@@ -29,6 +29,7 @@ function App() {
 
   const [uniqueDates, setUniqueDates] = useState([]);
   const [play] = useSound(pingSfx);
+  const [filterType, setFilterType] = useState("ALL"); // NEW
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -54,7 +55,7 @@ function App() {
         ];
         setUniqueDates(dates);
         if (!selectedDate && dates.length > 0) {
-          setSelectedDate(dates[dates.length - 1]); // auto-select latest
+          setSelectedDate(dates[dates.length - 1]);
         }
       } catch (e) {
         console.error("Failed to fetch logs", e);
@@ -67,7 +68,13 @@ function App() {
   }, [play, selectedDate]);
 
   const filteredLogs = selectedDate
-    ? logs.filter((log) => log.Time.startsWith(selectedDate))
+    ? logs
+        .filter((log) => log.Time.startsWith(selectedDate))
+        .filter((log) => {
+          if (filterType === "PROFIT") return parseFloat(log["P/L"]) > 0;
+          if (filterType === "LOSS") return parseFloat(log["P/L"]) < 0;
+          return true;
+        })
     : logs;
 
   const pieData = filteredLogs.reduce((acc, log) => {
@@ -115,6 +122,40 @@ function App() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={() => setFilterType("PROFIT")}
+            className={`px-4 py-2 rounded font-semibold ${
+              filterType === "PROFIT"
+                ? "bg-green-600 text-white"
+                : "bg-black text-green-400 border border-green-400"
+            }`}
+          >
+            Show Profit
+          </button>
+          <button
+            onClick={() => setFilterType("LOSS")}
+            className={`px-4 py-2 rounded font-semibold ${
+              filterType === "LOSS"
+                ? "bg-red-600 text-white"
+                : "bg-black text-red-400 border border-red-400"
+            }`}
+          >
+            Show Loss
+          </button>
+          <button
+            onClick={() => setFilterType("ALL")}
+            className={`px-4 py-2 rounded font-semibold ${
+              filterType === "ALL"
+                ? "bg-yellow-600 text-black"
+                : "bg-black text-yellow-300 border border-yellow-300"
+            }`}
+          >
+            Show All
+          </button>
         </div>
 
         {/* Last Trade Info */}
